@@ -1,0 +1,101 @@
+<html>
+<head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+</head>
+<body>
+    <br>
+    <div class= "container">
+       <div class = "row">
+           <label>Name:</label>
+           <input type="text" id="name" autocomplete="off">
+       </div>
+       <br>
+       <table class="table"> 
+           <thead class="thead-dark">
+               <tr>
+                   <th>id</th>
+                   <th>First Name</th>
+                   <th>Last Name</th>
+                   <th>Created At</th>
+                   <th>Email</th>
+               </tr>
+           </thead>
+           <tbody id="table_body"></tbody>
+       </table>
+
+    </div>
+</body>
+
+{% csrf_token %}
+<script>
+    $(document).ready(function(){
+
+        function convertToJson(str){
+            data=str.replace(/&quot;/g,'"')
+            var obj = JSON.parse(data);
+            return obj
+        }
+        
+        loadtable("{{users}}")
+
+        var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        })
+        
+        $("#name").keyup(function(){
+            $.ajax({
+                type:"POST",
+                url: "search",
+                data: {
+                    "name" : $(this).val()
+                }
+            }).done(function(users){
+                // console.log(users)
+                loadtable(users)
+            })
+        })
+        
+        
+        function loadtable(users){
+            users = convertToJson(users)
+
+            var output = ""
+            for(var i = 0; i < 10; i++){
+                if (i < users.length){
+                    output+= "<tr>"
+                    output+= "<td>" + users[i]["pk"] + "</td>"
+                    output+= "<td>" + users[i]["fields"]["first_name"] + "</td>"
+                    output+= "<td>" + users[i]["fields"]["last_name"] + "</td>"
+                    output+= "<td>" + users[i]["fields"]["created_at"] + "</td>"
+                    output+= "<td>" + users[i]["fields"]["email"] + "</td>"
+                    output+= "</tr>"
+                }else{
+                    output+= "<tr>"
+                    output+= "<td>" + "" + "</td>"
+                    output+= "<td>" + "" + "</td>"
+                    output+= "<td>" + "" + "</td>"
+                    output+= "<td>" + "" + "</td>"
+                    output+= "<td>" + "" + "</td>"
+                    output+= "</tr>"
+                }
+            } 
+
+            $("#table_body").html(output)
+        }
+        
+
+    })
+</script>
+</html>

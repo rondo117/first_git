@@ -1,0 +1,149 @@
+<html>
+<head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+<body>
+   <div class = "container">
+       <div class="text-right form-group">
+           <a href ="/search">Go back</a>
+        </div>
+        <div class = "row">
+            <div class="col-3 bg-primary">
+                <form id="searchForm">
+                <br>
+                <div class="form-group">
+                    <label >Search User</label>
+                    <input type="text" name="name" class="form-control" onkeyup="search()">
+                </div>
+
+                <div class="form-group" onclick="search()">
+                    <input type="checkbox"  name="Male" id = "male">
+                    <label class="form-check-label" for = "male" >Male</label>
+                </div>
+
+                <div class="form-group" onclick="search()">
+                    <input type="checkbox"  name="Female" id = "female">
+                    <label class="form-check-label" for = "female">Female</label>
+                </div><br>
+
+                <div class="form-group">
+                    <label  >Sports</label>
+                </div>
+
+                <div class="form-group" onclick="search()">
+                    <input type="checkbox" name="Basketball" id = "basketball">
+                    <label class="form-check-label" for = "basketball" >Basketball</label>
+                </div>
+                <div class="form-group" onclick="search()">
+                    <input type="checkbox" name="Volleyball" id = "volleyball">
+                    <label class="form-check-label" for = "volleyball" >Volleyball</label>
+                </div>
+                <div class="form-group" onclick="search()">
+                    <input type="checkbox" name="Soccer" id = "soccer">
+                    <label class="form-check-label" for = "soccer">Soccer</label>
+                </div>
+                <div class="form-group" onclick="search()">
+                    <input type="checkbox" name="Football" id = "football">
+                    <label class="form-check-label" for = "football" >Football</label>
+                </div>
+
+                </form>
+            </div>
+            <div class="col-9 bg-danger d-inline-block" id = "resultDiv">
+
+            </div>
+        </div>
+   </div>
+</body>
+
+{% csrf_token %}
+<script>
+    $(document).ready(function(){
+        var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        })
+
+    })
+
+    function convertToJson(str){
+            data=str.replace(/&quot;/g,'"')
+            var obj = JSON.parse(data);
+            return obj
+        }
+
+    function search(){
+        var name        = ""
+        var male        = false
+        var female      = false
+        var basketball  = false
+        var volleyball  = false
+        var soccer      = false
+        var football    = false
+        var arr = $("#searchForm").serializeArray()
+        for (i in arr){
+            if (arr[i]["name"] == "name")
+                name = arr[i]["value"]
+            else if (arr[i]["name"] == "Male"){
+                male = true
+            }
+            else if (arr[i]["name"] == "Female"){
+                console.log("femail")
+                female = true
+            }
+            else if (arr[i]["name"] == "Basketball")
+                basketball = true
+            else if (arr[i]["name"] == "Volleyball")
+                volleyball = true
+            else if (arr[i]["name"] == "Soccer")
+                soccer = true
+            else if (arr[i]["name"] == "Football")
+                football = true
+
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "./filter",
+            data: {
+                "name"      : name,
+                "male"      : male,
+                "female"    : female,
+                "basketball": basketball,
+                "volleyball": volleyball,
+                "soccer"    : soccer,
+                "football"  : football
+            }
+        }).done(function(users){
+            var output = "<br>"
+            users = convertToJson(users)
+
+            for (i in users){
+                output += '<div class="col-3 d-inline-block">'
+                output +=       '<div class="panel panel-primary d-inline-block">'
+                output +=               '<div class="panel-body"><img src="' + users[i]['fields']['image_path']+'" alt="Smiley face" style="width:120px;height:120px"></div>'
+                output +=               '<div class="panel-heading">'+users[i]['fields']['first_name'] +' ' + users[i]['fields']['last_name']+'</div>'
+                output +=       '</div>'
+                output += '</div>'
+            }
+                
+
+            $("#resultDiv").html(output)
+        })
+    }
+
+
+</script>
+</html>

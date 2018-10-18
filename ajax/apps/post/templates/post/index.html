@@ -1,0 +1,55 @@
+<html>
+<head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+</head>
+<body>
+    <div class= "container">
+        <h1>My Post</h1>
+        <div id = "notes"></div>
+
+        <hr>
+        <div class="col-4">
+            <h3>Add a note:</h3>
+            <textarea id ="note" class="form-control" rows = 4></textarea>
+            <br>
+            <button id = "post" class="btn btn-primary">Post it!</button>
+        </div>
+    </div>
+</body>
+
+{% csrf_token %}
+<script>
+    $(document).ready(function(){
+        var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        })
+        
+        $("#post").click(function(){
+            
+            $.ajax({
+                type: "POST",
+                url: "/post/newNote",
+                data: {
+                    "note" : $("#note").val()
+                }
+            }).done(function(mesg){
+                $("#notes").html(mesg + $("#notes").html())
+                
+                console.log(mesg)
+            })
+        })
+    })
+</script>
+</html>

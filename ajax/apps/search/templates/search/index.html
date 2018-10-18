@@ -1,0 +1,167 @@
+<html>
+<head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+</head>
+<body>
+    <div id="alert">
+        <strong>Well done!</strong> You successfully created a new user
+    </div>
+    <br>
+    <div class= "container">
+        <div class = "col-6 form-group">
+            <form id = "newUser">
+                <h3>Create a new user | <a href="search" >Search</a></h3>
+                <div class="row form-group">
+                    <label class="col-3">First Name</label>
+                    <input type="text" name = "first_name" id = "first_name" class="form-control col-9">
+                </div><!-- first name -->
+
+                <div class="row form-group">
+                    <label class="col-3">Last Name</label>
+                    <input type="text" name = "last_name" id = "last_name" class="form-control col-9">
+                </div><!-- last name -->
+
+                <div class="row form-group">
+                    <label class="col-3">Gender</label>
+                    <div class ="col-9">
+                        <input type="radio" name="gender" value="Male" checked > 
+                        <p class="d-inline col-5 text-left">Male</p>
+                        <input type="radio" name="gender" value="Female"> 
+                        <p class="d-inline col-5 text-left">Female</p>
+                    </div>
+                </div><!-- gender -->
+
+                <div class="row form-group">
+                    <label class="col-3">Image Path</label>
+                    <input type="text" name = "image_url"  id = "image_url" class="form-control col-9">
+                </div><!-- img path-->
+                
+                <div class="row form-group">
+                    <label class="col-3">Sport</label>
+                    <select class="form-control col-9" name="sport">
+                        <option value="Basketball">Basketball</option>
+                        <option value="Volleyball">Volleyball</option>
+                        <option value="Baseball">Baseball</option>
+                        <option value="Soccer">Soccer</option>
+                        <option value="Football">Football</option>
+                    </select>
+                </div><!-- sport path-->
+                
+            </form>
+            
+            <div class="text-right row">
+                <button class="btn btn-primary col-12" onclick="createUser()">Create</button>
+            </div>
+
+        </div>
+
+        <br>
+        <div class = "row form-group">
+            Use Ajax to fetch 
+            <input type="number" id="records" value="1" class = "col-1 p-0 text-center ml-2 mr-2">
+            records (with the most recent showing up first)
+        </div>
+        <div class="text-center col-7 form-group">
+            <button class ="btn btn-success" onclick="fetch()">Fetch and display using Ajax!</button>
+        </div>
+
+        <div id="result"></div>
+    </div>  
+</body>
+
+{% csrf_token %}
+<script>
+    $(document).ready(function(){
+        $("#alert").hide()
+        
+
+        function convertToJson(str){
+            data=str.replace(/&quot;/g,'"')
+            var obj = JSON.parse(data);
+            return obj
+        }
+        
+        var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        })
+
+    })
+
+    function createUser(){
+        data  = $("#newUser").serializeArray()
+        $.ajax({
+            type:"POST",
+            url:"add",
+            data:{
+                "first_name" : data[0]["value"],
+                "last_name"  : data[1]["value"],
+                "gender"     : data[2]["value"],
+                "image_url"  : data[3]["value"],
+                "sport"  : data[4]["value"],
+            }
+
+        }).done(function(){
+            $("#first_name").val("")
+            $("#last_name").val("")
+            $("#image_url").val("")
+            congrats()
+        })
+    }
+
+    function congrats(){
+        $("#alert").show()
+        $("#alert").addClass("alert alert-success")
+        setTimeout(function(){ $("#alert").fadeOut() }, 3000);
+    }
+
+    function fetch(){
+        console.log("click")
+        $.ajax({
+            type: "POST",
+            url : "fetch",
+            data: {
+                "num" : $("#records").val()
+            }
+        }).done(function(mesg){
+            var obj = JSON.parse(mesg)
+            var output  = "<table  class=\"table\">"
+                output +=      "<thead class=\"thead-dark\">"
+                output +=      "<tr>"
+                output +=           "<th>First Name</th>" 
+                output +=           "<th>Last Name</th>" 
+                output +=           "<th>Gender</th>" 
+                output +=           "<th>Sport</th>" 
+                output +=           "<th>Image Path</th>" 
+                output +=      "</tr>"
+                output +=      "</thead>"
+                output +=      "<tbody>"
+            for (i in obj){
+                console.log(obj[i]["fields"])
+                output +=      "<tr>"
+                output +=           "<td>" +obj[i]["fields"]["first_name"] + "</td>" 
+                output +=           "<td>" +obj[i]["fields"]["last_name"] + "</td>" 
+                output +=           "<td>" +obj[i]["fields"]["gender"] + "</td>" 
+                output +=           "<td>" +obj[i]["fields"]["sport"] + "</td>" 
+                output +=           "<td>" +obj[i]["fields"]["image_path"] + "</td>" 
+                output +=      "</tr>"
+            }
+                output +=      "</tbody>"
+
+            $("#result").html(output)
+        })
+    }
+
+</script>
+</html>
